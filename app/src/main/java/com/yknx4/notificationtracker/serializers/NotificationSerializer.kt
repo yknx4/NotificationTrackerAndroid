@@ -2,6 +2,7 @@ package com.yknx4.notificationtracker.serializers
 
 import android.app.Notification
 import android.content.Context
+import android.os.Bundle
 import android.service.notification.StatusBarNotification
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
@@ -13,7 +14,7 @@ import java.lang.reflect.Type
 /**
  * Created by yknx4 on 7/13/16.
  */
-class NotificationSerializer(c: Context) : LocationAwareSerializer(c), JsonSerializer<Notification> {
+class NotificationSerializer : LocationAwareSerializer(), JsonSerializer<Notification> {
     override fun serialize(src: Notification, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
         val serialized_object = JsonObject()
         serialized_object.addProperty(TICKER_TEXT, src.tickerText?.toString())
@@ -26,6 +27,7 @@ class NotificationSerializer(c: Context) : LocationAwareSerializer(c), JsonSeria
         serialized_object.addProperty(PRIORITY, src.priority)
 //        serialized_object.addProperty(VISIBILITY, src.visibility)
 //        serialized_object.addProperty(ICON_BASE64, src.largeIcon?.toBase64())
+        serialized_object.add(EXTRAS, context.serialize(src.extras, Bundle::class.java))
         return serialized_object
     }
     companion object {
@@ -39,6 +41,7 @@ class NotificationSerializer(c: Context) : LocationAwareSerializer(c), JsonSeria
         val PRIORITY = "priority"
         val VISIBILITY = "visibility"
         val ICON_BASE64 = "large_icon"
+        val EXTRAS = "extras"
     }
 }
 

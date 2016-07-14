@@ -6,42 +6,93 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.location.Location
+import android.os.Bundle
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.api.GoogleApiClient
+import com.google.android.gms.location.LocationListener
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.yknx4.notificationtracker.API
+import com.yknx4.notificationtracker.events.NotificationEvent
 import com.yknx4.notificationtracker.getTag
+import com.yknx4.notificationtracker.network.endpoints.EchoService
+import com.yknx4.notificationtracker.serializers.LocationAwareSerializer
 import com.yknx4.notificationtracker.serializers.LocationSerializer
 import com.yknx4.notificationtracker.serializers.NotificationSerializer
 import com.yknx4.notificationtracker.serializers.StatusBarNotificationSerializer
+import org.greenrobot.eventbus.EventBus
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 /**
  * Created by yknx4 on 7/13/16.
  */
-class NotificationTrackerService : NotificationListenerService() {
+class NotificationTrackerService : NotificationListenerService(), GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
+    override fun onLocationChanged(p0: Location?) {
+        Log.i(getTag(), "Updating Location")
+        LocationAwareSerializer.location = p0
+    }
+
+    override fun onConnectionFailed(p0: ConnectionResult) {
+        Log.e(getTag(), "Connection to Google Api failed")
+    }
+
+    override fun onConnected(p0: Bundle?) {
+        val mLocationRequest = LocationRequest()
+        mLocationRequest.priority = LocationRequest.PRIORITY_LOW_POWER
+        mLocationRequest.fastestInterval = 500
+        mLocationRequest.interval = 1 * 1000 * 60
+        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this)
+    }
+
+    override fun onConnectionSuspended(p0: Int) {
+        Log.e(getTag(), "Connection to Google Api suspended")
+    }
 
     var gson: Gson = Gson()
     var status_notification_serializer:StatusBarNotificationSerializer? = null
     var notification_serializer:NotificationSerializer? = null
 
     override fun onCreate() {
-        status_notification_serializer = StatusBarNotificationSerializer(this)
-        notification_serializer = NotificationSerializer(this)
+        initializeGoogleApi()
+        initializeRestClient()
+        status_notification_serializer = StatusBarNotificationSerializer()
+        notification_serializer = NotificationSerializer()
         gson = GsonBuilder()
                 .registerTypeAdapter(Location::class.java, LocationSerializer())
                 .registerTypeAdapter(StatusBarNotification::class.java, status_notification_serializer)
                 .registerTypeAdapter(Notification::class.java, notification_serializer)
                 .setPrettyPrinting()
                 .create()
-        status_notification_serializer!!.tryConnect()
-        notification_serializer!!.tryConnect()
         super.onCreate()
     }
 
+    private var retrofit: Retrofit? = null
+
+    private var service: EchoService? = null
+
+    private fun initializeRestClient() {
+        retrofit = Retrofit.Builder().addConverterFactory(GsonConverterFactory.create()).baseUrl(API.API_URL).build()
+        service = retrofit?.create(EchoService::class.java)
+
+    }
+
+    private var mGoogleApiClient: GoogleApiClient? = null
+
+    private fun initializeGoogleApi() {
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = GoogleApiClient.Builder(this).addConnectionCallbacks(this).addOnConnectionFailedListener(this).addApi(LocationServices.API).build()
+        }
+        mGoogleApiClient?.connect()
+    }
+
     override fun onDestroy() {
-        status_notification_serializer?.tryDisconnect()
-        notification_serializer?.tryDisconnect()
+        mGoogleApiClient?.disconnect()
         super.onDestroy()
     }
 
@@ -50,6 +101,8 @@ class NotificationTrackerService : NotificationListenerService() {
         Log.i(getTag(), "ID :" + sbn.id + "t" + sbn.notification.tickerText + "t" + sbn.packageName)
         val json = gson.toJson(sbn, StatusBarNotification::class.java)
         Log.d(getTag(), json)
+//        EventBus.getDefault().post(NotificationEvent(json, sbn))
+        EventBus.getDefault().post(NotificationEvent(service?.create(json)?.execute()?.body(), sbn))
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {

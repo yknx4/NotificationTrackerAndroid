@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/NotificationTracker.iml" filepath="$PROJECT_DIR$/NotificationTracker.iml" />
+      <module fileurl="file://$PROJECT_DIR$/NotificationTrackerAndroid.iml" filepath="$PROJECT_DIR$/NotificationTrackerAndroid.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>

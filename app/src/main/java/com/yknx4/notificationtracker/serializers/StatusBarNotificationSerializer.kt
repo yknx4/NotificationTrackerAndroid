@@ -15,7 +15,7 @@ import java.lang.reflect.Type
 /**
  * Created by yknx4 on 7/13/16.
  */
-class StatusBarNotificationSerializer(c: Context) : LocationAwareSerializer(c), JsonSerializer<StatusBarNotification> {
+class StatusBarNotificationSerializer : LocationAwareSerializer(), JsonSerializer<StatusBarNotification> {
     override fun serialize(src: StatusBarNotification, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
         val serialized_object = JsonObject()
 //        serialized_object.addProperty(GROUP_KEY, src.groupKey)
@@ -31,7 +31,6 @@ class StatusBarNotificationSerializer(c: Context) : LocationAwareSerializer(c), 
 //        serialized_object.addProperty(IS_GROUP, src.isGroup)
         serialized_object.add(NOTIFICATION, context.serialize(src.notification))
 //        serialized_object.add(USER, context.serialize(src.user))
-        val location = getLocation()
         if(location!=null){
             serialized_object.add(LOCATION, context.serialize(location))
         }
