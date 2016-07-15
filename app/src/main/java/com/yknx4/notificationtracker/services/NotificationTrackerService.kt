@@ -17,17 +17,24 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.yknx4.notificationtracker.API
-import com.yknx4.notificationtracker.events.NotificationEvent
-import com.yknx4.notificationtracker.getTag
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.yknx4.notificationtracker.*
+import com.yknx4.notificationtracker.events.LogEvent
+import com.yknx4.notificationtracker.events.StatusBarNotificationEvent
 import com.yknx4.notificationtracker.network.endpoints.EchoService
+import com.yknx4.notificationtracker.network.endpoints.StatusBarNotificationService
 import com.yknx4.notificationtracker.serializers.LocationAwareSerializer
 import com.yknx4.notificationtracker.serializers.LocationSerializer
 import com.yknx4.notificationtracker.serializers.NotificationSerializer
 import com.yknx4.notificationtracker.serializers.StatusBarNotificationSerializer
 import org.greenrobot.eventbus.EventBus
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.logging.Logger
 
 /**
  * Created by yknx4 on 7/13/16.
@@ -54,6 +61,10 @@ class NotificationTrackerService : NotificationListenerService(), GoogleApiClien
         Log.e(getTag(), "Connection to Google Api suspended")
     }
 
+    fun postEvent(tag:String, action:String, message:String, notification:StatusBarNotification){
+        EventBus.getDefault().post(StatusBarNotificationEvent(tag, action, message, notification))
+    }
+
     var gson: Gson = Gson()
     var status_notification_serializer:StatusBarNotificationSerializer? = null
     var notification_serializer:NotificationSerializer? = null
@@ -74,11 +85,11 @@ class NotificationTrackerService : NotificationListenerService(), GoogleApiClien
 
     private var retrofit: Retrofit? = null
 
-    private var service: EchoService? = null
+    private var service: StatusBarNotificationService? = null
 
     private fun initializeRestClient() {
         retrofit = Retrofit.Builder().addConverterFactory(GsonConverterFactory.create()).baseUrl(API.API_URL).build()
-        service = retrofit?.create(EchoService::class.java)
+        service = retrofit?.create(StatusBarNotificationService::class.java)
 
     }
 
@@ -99,15 +110,30 @@ class NotificationTrackerService : NotificationListenerService(), GoogleApiClien
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         Log.i(getTag(), "**********  onNotificationPosted")
         Log.i(getTag(), "ID :" + sbn.id + "t" + sbn.notification.tickerText + "t" + sbn.packageName)
-        val json = gson.toJson(sbn, StatusBarNotification::class.java)
-        Log.d(getTag(), json)
-//        EventBus.getDefault().post(NotificationEvent(json, sbn))
-        EventBus.getDefault().post(NotificationEvent(service?.create(json)?.execute()?.body(), sbn))
+        val json = sbn.toJson(gson)
+        service?.create(sbn.toJsonObject(gson))?.enqueue(RetrofitNotificationPost())
+        postEvent(getTag(), "Posted", json, sbn)
+        NotificationLogger.d(getTag(), json)
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
         Log.i(getTag(), "********** onNotificationRemoved")
         Log.i(getTag(), "ID :" + sbn.id + "t" + sbn.notification.tickerText + "t" + sbn.packageName)
+        postEvent(getTag(), "removed", sbn.toJson(gson), sbn)
+    }
+
+    class RetrofitNotificationPost : Callback<JsonElement>{
+        override fun onFailure(call: Call<JsonElement>?, t: Throwable?) {
+            Log.d(getTag(), call?.request()?.url().toString())
+            Log.d(getTag(), t?.message ?: "")
+            Log.d(getTag(), call?.request()?.method() ?: "")
+        }
+
+        override fun onResponse(call: Call<JsonElement>?, response: Response<JsonElement>?) {
+            Log.d(getTag(), response?.body().toString())
+            Log.d(getTag(), response?.errorBody()?.string() ?: "")
+            Log.d(getTag(), response?.message() ?: "")
+        }
 
     }
 

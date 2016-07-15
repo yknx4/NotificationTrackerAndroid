@@ -26,18 +26,20 @@ class LocationSerializer: JsonSerializer<Location> {
         serialized_object.addProperty(PROVIDER, src.provider)
         serialized_object.addProperty(SPEED, src.speed)
         serialized_object.addProperty(TIME, src.time)
+        serialized_object.add(EXTRAS, context.serialize(src.extras))
         return serialized_object
     }
     companion object {
         val ACCURACY = "accuracy"
         val ALTITULE = "altitude"
         val BEARING = "bearing"
-        val ELAPSED_TIME_NANOS = "elapsed_time"
+        val ELAPSED_TIME_NANOS = "elapsed_real_time_nanos"
         val LATITUDE = "latitude"
         val LONGITUDE = "longitude"
         val PROVIDER = "provider"
         val SPEED = "speed"
         val TIME = "time"
+        val EXTRAS = "extras"
     }
 }
 

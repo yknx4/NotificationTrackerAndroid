@@ -2,6 +2,7 @@ package com.yknx4.notificationtracker.serializers
 
 import android.app.Notification
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import android.service.notification.StatusBarNotification
 import com.google.gson.JsonElement
@@ -19,20 +20,27 @@ class NotificationSerializer : LocationAwareSerializer(), JsonSerializer<Notific
         val serialized_object = JsonObject()
         serialized_object.addProperty(TICKER_TEXT, src.tickerText?.toString())
         serialized_object.addProperty(WHEN, src.`when`)
-//        serialized_object.addProperty(CATEGORY, src.category)
-//        serialized_object.addProperty(COLOR, src.color)
         serialized_object.addProperty(DEFAUlTS, src.defaults)
         serialized_object.addProperty(FLAGS, src.flags)
         serialized_object.addProperty(ICON_LEVEL, src.iconLevel)
         serialized_object.addProperty(PRIORITY, src.priority)
-//        serialized_object.addProperty(VISIBILITY, src.visibility)
-//        serialized_object.addProperty(ICON_BASE64, src.largeIcon?.toBase64())
+        serialized_object.addProperty(ICON_BASE64, src.largeIcon?.toBase64())
         serialized_object.add(EXTRAS, context.serialize(src.extras, Bundle::class.java))
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+            serialized_object.addProperty(CATEGORY, src.category)
+            serialized_object.addProperty(COLOR, src.color)
+            serialized_object.addProperty(VISIBILITY, src.visibility)
+        }
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N){
+        }
+
         return serialized_object
     }
     companion object {
         val TICKER_TEXT = "ticker_text"
-        val WHEN = "when"
+        val WHEN = "when_ms"
         val CATEGORY = "category"
         val COLOR = "color"
         val DEFAUlTS = "defaults"
