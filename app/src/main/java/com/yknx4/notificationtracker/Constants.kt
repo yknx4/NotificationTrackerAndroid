@@ -5,7 +5,7 @@ package com.yknx4.notificationtracker
  */
 abstract class Constants{
     companion object{
-        val API_URL = "http://192.168.0.90"
+        val API_URL = "http://10017f58.ngrok.io"
 
     }
 }
@@ -16,5 +16,7 @@ abstract class API{
         const val API_URL = BASE_URL + "api/v1/"
         const val ECHO_ENDPOINT = "echo"
         const val STATUS_BAR_NOTIFICATION_ENDPOINT = "status_bar_notifications"
+        const val AUTH_ENDPOINT = "auth"
+        const val SIGNIN_ENDPOINT = AUTH_ENDPOINT + "/sign_in"
     }
 }

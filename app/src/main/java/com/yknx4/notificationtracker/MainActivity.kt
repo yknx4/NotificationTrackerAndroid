@@ -14,6 +14,7 @@ import com.yknx4.notificationtracker.events.StatusBarNotificationEvent
 import com.yknx4.notificationtracker.network.endpoints.EchoService
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
+import okhttp3.OkHttpClient
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
