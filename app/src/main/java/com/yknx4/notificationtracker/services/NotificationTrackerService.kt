@@ -19,15 +19,14 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import com.yknx4.lib.yknxtools.device.Device
+import com.yknx4.lib.yknxtools.device.getDeviceUUID
 import com.yknx4.notificationtracker.*
 import com.yknx4.notificationtracker.events.LogEvent
 import com.yknx4.notificationtracker.events.StatusBarNotificationEvent
 import com.yknx4.notificationtracker.network.endpoints.EchoService
 import com.yknx4.notificationtracker.network.endpoints.StatusBarNotificationService
-import com.yknx4.notificationtracker.serializers.LocationAwareSerializer
-import com.yknx4.notificationtracker.serializers.LocationSerializer
-import com.yknx4.notificationtracker.serializers.NotificationSerializer
-import com.yknx4.notificationtracker.serializers.StatusBarNotificationSerializer
+import com.yknx4.notificationtracker.serializers.*
 import org.greenrobot.eventbus.EventBus
 import retrofit2.Call
 import retrofit2.Callback
@@ -72,6 +71,7 @@ class NotificationTrackerService : NotificationListenerService(), GoogleApiClien
     override fun onCreate() {
         initializeGoogleApi()
         initializeRestClient()
+        DeviceAwareSerializer.deviceUUid = getDeviceUUID()
         status_notification_serializer = StatusBarNotificationSerializer()
         notification_serializer = NotificationSerializer()
         gson = GsonBuilder()

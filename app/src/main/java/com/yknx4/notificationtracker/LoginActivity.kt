@@ -24,8 +24,14 @@ import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.TextView
+import com.google.gson.JsonElement
 import com.securepreferences.SecurePreferences
+import com.yknx4.notificationtracker.network.endpoints.AuthService
 import kotlinx.android.synthetic.main.activity_login.*
+import okhttp3.Headers
+import okhttp3.ResponseBody
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.util.*
 
 /**
@@ -244,26 +250,21 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
      */
     inner class UserLoginTask internal constructor(private val mEmail: String, private val mPassword: String) : AsyncTask<Void, Void, Boolean>() {
 
+        private var  headers: Headers? = null
+
+        private var  body: JsonElement? = null
+
+        private var  error_body: ResponseBody? = null
+
         override fun doInBackground(vararg params: Void): Boolean? {
-            // TODO: attempt authentication against a network service.
-
-            try {
-                // Simulate network access.
-                Thread.sleep(2000)
-            } catch (e: InterruptedException) {
-                return false
-            }
-
-            for (credential in DUMMY_CREDENTIALS) {
-                val pieces = credential.split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-                if (pieces[0] == mEmail) {
-                    // Account exists, return true if the password matches.
-                    return pieces[1] == mPassword
-                }
-            }
-
-            // TODO: register the new account here.
-            return true
+            val retrofit = Retrofit.Builder().addConverterFactory(GsonConverterFactory.create()).baseUrl(API.BASE_URL).build()
+            var service = retrofit?.create(AuthService::class.java)
+            val request = service?.login(mEmail , mPassword)
+            var response = request?.execute()
+            headers = response?.headers()
+            body = response?.body()
+            error_body = response?.errorBody()
+            return response?.isSuccessful?:false
         }
 
         override fun onPostExecute(success: Boolean?) {
@@ -271,8 +272,24 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
             showProgress(false)
 
             if (success!!) {
+                /** TODO: Move this logic to its own class **/
+                /** access-token →u7j6e7tYhmGDH-rbIxqevA
+                  *  client →SwQS6z8_BBtNtd8jn7KbyQ
+                  *  expiry →1470081980
+                  *  token-type →Bearer
+                  *  uid →test@dev.com **/
+                val editor = mPreferences?.edit()
+                editor?.putString(PreferencesFields.EMAIL, mEmail)?.putString(PreferencesFields.PASSWORD, mPassword)
+                editor?.putString(PreferencesFields.ACCESS_TOKEN, headers?.get(PreferencesFields.ACCESS_TOKEN))
+                editor?.putString(PreferencesFields.CLIENT, headers?.get(PreferencesFields.CLIENT))
+                editor?.putString(PreferencesFields.TOKEN_TYPE, headers?.get(PreferencesFields.TOKEN_TYPE))
+                editor?.putString(PreferencesFields.EXPIRY, headers?.get(PreferencesFields.EXPIRY))
+                editor?.putString(PreferencesFields.UID, headers?.get(PreferencesFields.UID))
+                editor?.apply()
                 finish()
             } else {
+                NotificationLogger.d(getTag(), body.toString())
+                NotificationLogger.d(getTag(), error_body?.string()?:"")
                 edt_password.error = getString(R.string.error_incorrect_password)
                 edt_password.requestFocus()
             }
