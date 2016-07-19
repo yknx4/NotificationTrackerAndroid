@@ -1,11 +1,16 @@
 package com.yknx4.notificationtracker
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.service.notification.StatusBarNotification
 import android.util.Base64
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import com.securepreferences.SecurePreferences
+import com.yknx4.notificationtracker.events.LoginEvent
+import okhttp3.Headers
+import retrofit2.Response
 import java.io.ByteArrayOutputStream
 
 /**
@@ -33,4 +38,19 @@ fun StatusBarNotification.toJsonObject(gson:Gson = Gson(), root:Boolean = true):
         result = root
     }
     return result
+}
+
+fun Headers.getLoginEvent(): LoginEvent {
+    val event = LoginEvent(
+            get(PreferencesFields.ACCESS_TOKEN),
+            get(PreferencesFields.CLIENT),
+            get(PreferencesFields.TOKEN_TYPE),
+            get(PreferencesFields.EXPIRY),
+            get(PreferencesFields.UID)
+    )
+    return event
+}
+
+fun Context.loggedOut(): Boolean {
+    return SecurePreferences(this).getString(PreferencesFields.ACCESS_TOKEN, "").equals("")
 }

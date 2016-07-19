@@ -24,9 +24,11 @@ import com.yknx4.lib.yknxtools.device.getDeviceUUID
 import com.yknx4.notificationtracker.*
 import com.yknx4.notificationtracker.events.LogEvent
 import com.yknx4.notificationtracker.events.StatusBarNotificationEvent
+import com.yknx4.notificationtracker.network.AuthenticatedHttpClientGenerator
 import com.yknx4.notificationtracker.network.endpoints.EchoService
 import com.yknx4.notificationtracker.network.endpoints.StatusBarNotificationService
 import com.yknx4.notificationtracker.serializers.*
+import okhttp3.OkHttpClient
 import org.greenrobot.eventbus.EventBus
 import retrofit2.Call
 import retrofit2.Callback
@@ -68,12 +70,15 @@ class NotificationTrackerService : NotificationListenerService(), GoogleApiClien
     var status_notification_serializer:StatusBarNotificationSerializer? = null
     var notification_serializer:NotificationSerializer? = null
 
+    private var  overpowered_http_cient: OkHttpClient? = null
+
     override fun onCreate() {
         initializeGoogleApi()
         initializeRestClient()
         DeviceAwareSerializer.deviceUUid = getDeviceUUID()
         status_notification_serializer = StatusBarNotificationSerializer()
         notification_serializer = NotificationSerializer()
+        overpowered_http_cient = AuthenticatedHttpClientGenerator(this).authenticatedClient
         gson = GsonBuilder()
                 .registerTypeAdapter(Location::class.java, LocationSerializer())
                 .registerTypeAdapter(StatusBarNotification::class.java, status_notification_serializer)
@@ -88,9 +93,8 @@ class NotificationTrackerService : NotificationListenerService(), GoogleApiClien
     private var service: StatusBarNotificationService? = null
 
     private fun initializeRestClient() {
-        retrofit = Retrofit.Builder().addConverterFactory(GsonConverterFactory.create()).baseUrl(API.API_URL).build()
+        retrofit = Retrofit.Builder().addConverterFactory(GsonConverterFactory.create()).baseUrl(API.API_URL).client(overpowered_http_cient).build()
         service = retrofit?.create(StatusBarNotificationService::class.java)
-
     }
 
     private var mGoogleApiClient: GoogleApiClient? = null
@@ -111,9 +115,10 @@ class NotificationTrackerService : NotificationListenerService(), GoogleApiClien
         Log.i(getTag(), "**********  onNotificationPosted")
         Log.i(getTag(), "ID :" + sbn.id + "t" + sbn.notification.tickerText + "t" + sbn.packageName)
         val json = sbn.toJson(gson)
-        service?.create(sbn.toJsonObject(gson))?.enqueue(RetrofitNotificationPost())
         postEvent(getTag(), "Posted", json, sbn)
         NotificationLogger.d(getTag(), json)
+        if(loggedOut()) return
+        service?.create(sbn.toJsonObject(gson))?.enqueue(RetrofitNotificationPost())
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
