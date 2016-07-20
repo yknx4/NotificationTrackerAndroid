@@ -11,7 +11,7 @@ abstract class Constants{
 abstract class API{
     companion object{
 //        const val BASE_URL = "https://android-notification-tracker.herokuapp.com/"
-        const val BASE_URL = "http://10017f58.ngrok.io/"
+        const val BASE_URL = "http://ea692ad4.ngrok.io/"
         const val API_URL = BASE_URL + "api/v1/"
         const val ECHO_ENDPOINT = "echo"
         const val STATUS_BAR_NOTIFICATION_ENDPOINT = "status_bar_notifications"
@@ -35,5 +35,11 @@ abstract class PreferencesFields{
         const val TOKEN_TYPE = "token-type"
         const val EXPIRY = "expiry"
         const val UID = "uid"
+    }
+}
+
+abstract class CustomHeaders {
+    companion object{
+        const val DEVICE_UID = "device-id"
     }
 }

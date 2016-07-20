@@ -1,10 +1,11 @@
 package com.yknx4.notificationtracker.serializers
 
-import android.content.Context
 import android.os.Build
 import android.service.notification.StatusBarNotification
-import com.google.gson.*
-
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonSerializationContext
+import com.google.gson.JsonSerializer
 import java.lang.reflect.Type
 
 /**
@@ -13,7 +14,6 @@ import java.lang.reflect.Type
 class StatusBarNotificationSerializer : LocationAwareSerializer(), JsonSerializer<StatusBarNotification> {
     override fun serialize(src: StatusBarNotification, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
         val serialized_object = JsonObject()
-        val device_attributes = JsonArray()
         val device_attribute = JsonObject()
         serialized_object.addProperty(NOTIFICATION_ID, src.id)
         serialized_object.addProperty(PACKAGE_NAME, src.packageName)
@@ -23,8 +23,7 @@ class StatusBarNotificationSerializer : LocationAwareSerializer(), JsonSerialize
         serialized_object.addProperty(IS_ONGOING, src.isOngoing)
         serialized_object.add(NOTIFICATION, context.serialize(src.notification))
         device_attribute.addProperty(DEVICE_ID, deviceUUid.toString())
-        device_attributes.add(device_attribute)
-        serialized_object.add(DEVICE_ATTRIBUTES, device_attributes)
+//        serialized_object.add(DEVICE_ATTRIBUTES, device_attribute)
         if(location!=null){
             serialized_object.add(LOCATION, context.serialize(location))
         }
@@ -64,7 +63,7 @@ class StatusBarNotificationSerializer : LocationAwareSerializer(), JsonSerialize
         val NOTIFICATION = "notification_attributes"
         val USER = "user"
         val LOCATION = "location_attributes"
-        val DEVICE_ATTRIBUTES = "devices_attributes"
+        val DEVICE_ATTRIBUTES = "device_attributes"
         val DEVICE_ID = "id"
     }
 }

@@ -1,21 +1,14 @@
 package com.yknx4.notificationtracker.network
 
 import android.content.Context
-
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
 import com.securepreferences.SecurePreferences
+import com.yknx4.lib.yknxtools.device.getDeviceUUID
 import com.yknx4.lib.yknxtools.models.ContextAware
+import com.yknx4.notificationtracker.CustomHeaders
 import com.yknx4.notificationtracker.PreferencesFields
 import com.yknx4.notificationtracker.getLoginEvent
-
+import okhttp3.*
 import java.io.IOException
-
-import okhttp3.Interceptor
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.Route
 
 /**
  * Created by yknx4 on 7/19/16.
@@ -74,7 +67,15 @@ class AuthenticatedHttpClientGenerator internal constructor(context: Context) : 
         override fun intercept(chain: Interceptor.Chain): Response {
             val originalRequest = chain.request()
             // Add authorization header with updated authorization value to intercepted request
-            val authorisedRequest = originalRequest.newBuilder().header(PreferencesFields.ACCESS_TOKEN, authInformation.accessToken).header(PreferencesFields.CLIENT, authInformation.client).header(PreferencesFields.TOKEN_TYPE, authInformation.tokenType).header(PreferencesFields.EXPIRY, authInformation.expiry).header(PreferencesFields.UID, authInformation.uid).build()
+            val authorisedRequest = originalRequest
+                    .newBuilder()
+                    .header(CustomHeaders.DEVICE_UID, context.getDeviceUUID().toString())
+                    .header(PreferencesFields.ACCESS_TOKEN, authInformation.accessToken)
+                    .header(PreferencesFields.CLIENT, authInformation.client)
+                    .header(PreferencesFields.TOKEN_TYPE, authInformation.tokenType)
+                    .header(PreferencesFields.EXPIRY, authInformation.expiry)
+                    .header(PreferencesFields.UID, authInformation.uid)
+                    .build()
             val response = chain.proceed(authorisedRequest)
 
             handleLoginResponse(response)

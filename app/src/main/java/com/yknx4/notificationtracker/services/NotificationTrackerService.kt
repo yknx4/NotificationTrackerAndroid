@@ -1,10 +1,6 @@
 package com.yknx4.notificationtracker.services
 
 import android.app.Notification
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.location.Location
 import android.os.Bundle
 import android.service.notification.NotificationListenerService
@@ -18,14 +14,10 @@ import com.google.android.gms.location.LocationServices
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
-import com.google.gson.JsonObject
-import com.yknx4.lib.yknxtools.device.Device
 import com.yknx4.lib.yknxtools.device.getDeviceUUID
 import com.yknx4.notificationtracker.*
-import com.yknx4.notificationtracker.events.LogEvent
 import com.yknx4.notificationtracker.events.StatusBarNotificationEvent
 import com.yknx4.notificationtracker.network.AuthenticatedHttpClientGenerator
-import com.yknx4.notificationtracker.network.endpoints.EchoService
 import com.yknx4.notificationtracker.network.endpoints.StatusBarNotificationService
 import com.yknx4.notificationtracker.serializers.*
 import okhttp3.OkHttpClient
@@ -35,7 +27,6 @@ import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.util.logging.Logger
 
 /**
  * Created by yknx4 on 7/13/16.
@@ -78,7 +69,6 @@ class NotificationTrackerService : NotificationListenerService(), GoogleApiClien
         DeviceAwareSerializer.deviceUUid = getDeviceUUID()
         status_notification_serializer = StatusBarNotificationSerializer()
         notification_serializer = NotificationSerializer()
-        overpowered_http_cient = AuthenticatedHttpClientGenerator(this).authenticatedClient
         gson = GsonBuilder()
                 .registerTypeAdapter(Location::class.java, LocationSerializer())
                 .registerTypeAdapter(StatusBarNotification::class.java, status_notification_serializer)
@@ -93,6 +83,7 @@ class NotificationTrackerService : NotificationListenerService(), GoogleApiClien
     private var service: StatusBarNotificationService? = null
 
     private fun initializeRestClient() {
+        overpowered_http_cient = AuthenticatedHttpClientGenerator(this).authenticatedClient
         retrofit = Retrofit.Builder().addConverterFactory(GsonConverterFactory.create()).baseUrl(API.API_URL).client(overpowered_http_cient).build()
         service = retrofit?.create(StatusBarNotificationService::class.java)
     }

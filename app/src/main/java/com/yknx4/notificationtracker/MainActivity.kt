@@ -1,6 +1,7 @@
 package com.yknx4.notificationtracker
 
 import android.Manifest
+import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.Menu
@@ -37,6 +38,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if(loggedOut()){
+            val login_activity = Intent(this, LoginActivity::class.java)
+            startActivity(login_activity)
+        }
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
         fab.setOnClickListener { view ->

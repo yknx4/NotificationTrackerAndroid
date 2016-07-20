@@ -14,7 +14,6 @@ import android.net.Uri
 import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.provider.ContactsContract
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
@@ -22,7 +21,6 @@ import android.text.TextUtils
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
-import android.widget.Button
 import android.widget.TextView
 import com.google.gson.JsonElement
 import com.securepreferences.SecurePreferences
@@ -71,7 +69,8 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
             return
         }
 
-        loaderManager.initLoader(0, null, this)
+
+        loaderManager.initLoader(0, Bundle(), this)
     }
 
     private fun mayRequestContacts(): Boolean {
