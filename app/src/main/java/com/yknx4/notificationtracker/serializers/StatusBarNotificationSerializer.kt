@@ -22,9 +22,7 @@ class StatusBarNotificationSerializer : LocationAwareSerializer(), JsonSerialize
         serialized_object.addProperty(IS_CLEARABLE, src.isClearable)
         serialized_object.addProperty(IS_ONGOING, src.isOngoing)
         serialized_object.add(NOTIFICATION, context.serialize(src.notification))
-        device_attribute.addProperty(DEVICE_ID, deviceUUid.toString())
         device_attributes.add(device_attribute)
-        serialized_object.add(DEVICE_ATTRIBUTES, device_attributes)
         if(location!=null){
             serialized_object.add(LOCATION, context.serialize(location))
         }
@@ -64,8 +62,6 @@ class StatusBarNotificationSerializer : LocationAwareSerializer(), JsonSerialize
         val NOTIFICATION = "notification_attributes"
         val USER = "user"
         val LOCATION = "location_attributes"
-        val DEVICE_ATTRIBUTES = "devices_attributes"
-        val DEVICE_ID = "id"
     }
 }
 

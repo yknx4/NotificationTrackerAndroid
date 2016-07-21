@@ -1,4 +1,4 @@
-package com.yknx4.notificationtracker
+package com.yknx4.notificationtracker.activities
 
 import android.Manifest.permission.READ_CONTACTS
 import android.animation.Animator
@@ -26,10 +26,18 @@ import android.widget.Button
 import android.widget.TextView
 import com.google.gson.JsonElement
 import com.securepreferences.SecurePreferences
+import com.yknx4.notificationtracker.*
+import com.yknx4.notificationtracker.events.FailedLoginEvent
+import com.yknx4.notificationtracker.events.LoginEvent
+import com.yknx4.notificationtracker.events.StatusBarNotificationEvent
+import com.yknx4.notificationtracker.network.LoginService
 import com.yknx4.notificationtracker.network.endpoints.AuthService
 import kotlinx.android.synthetic.main.activity_login.*
+import kotlinx.android.synthetic.main.content_main.*
 import okhttp3.Headers
 import okhttp3.ResponseBody
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.*
@@ -41,8 +49,6 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
-    private var mAuthTask: UserLoginTask? = null
-    private var mPreferences: SharedPreferences? = null
 
     // UI references.
 
@@ -61,8 +67,6 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
         })
 
         email_sign_in_button.setOnClickListener { attemptLogin() }
-
-        mPreferences = SecurePreferences(this)
 
     }
 
@@ -102,15 +106,15 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
     }
 
 
+    private var logging_in: Boolean = false
+
     /**
      * Attempts to sign in or register the account specified by the login form.
      * If there are form errors (invalid email, missing fields, etc.), the
      * errors are presented and no actual login attempt is made.
      */
     private fun attemptLogin() {
-        if (mAuthTask != null) {
-            return
-        }
+        if(logging_in) return
 
         // Reset errors.
         edt_email.error = null
@@ -149,8 +153,8 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true)
-            mAuthTask = UserLoginTask(email, password)
-            mAuthTask!!.execute(null)
+            logging_in = true
+            LoginService(this).loginAsync(email, password)
         }
     }
 
@@ -244,61 +248,25 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
         }
     }
 
-    /**
-     * Represents an asynchronous login/registration task used to authenticate
-     * the user.
-     */
-    inner class UserLoginTask internal constructor(private val mEmail: String, private val mPassword: String) : AsyncTask<Void, Void, Boolean>() {
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onSuccesfulLogin(event: LoginEvent) {
+        showProgress(false)
+        logging_in = false
+        finish()
+    }
 
-        private var  headers: Headers? = null
-
-        private var  body: JsonElement? = null
-
-        private var  error_body: ResponseBody? = null
-
-        override fun doInBackground(vararg params: Void): Boolean? {
-            val retrofit = Retrofit.Builder().addConverterFactory(GsonConverterFactory.create()).baseUrl(API.BASE_URL).build()
-            var service = retrofit?.create(AuthService::class.java)
-            val request = service?.login(mEmail , mPassword)
-            var response = request?.execute()
-            headers = response?.headers()
-            body = response?.body()
-            error_body = response?.errorBody()
-            return response?.isSuccessful?:false
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onFailedLogin(event: FailedLoginEvent) {
+        showProgress(false)
+        logging_in = false
+        if(event.response != null){
+            val body = event.response.body()
+            val error_body = event.response.errorBody()
+            NotificationLogger.d(getTag(), body.toString())
+            NotificationLogger.d(getTag(), error_body?.string()?:"")
         }
-
-        override fun onPostExecute(success: Boolean?) {
-            mAuthTask = null
-            showProgress(false)
-
-            if (success!!) {
-                /** TODO: Move this logic to its own class **/
-                /** access-token →u7j6e7tYhmGDH-rbIxqevA
-                  *  client →SwQS6z8_BBtNtd8jn7KbyQ
-                  *  expiry →1470081980
-                  *  token-type →Bearer
-                  *  uid →test@dev.com **/
-                val editor = mPreferences?.edit()
-                editor?.putString(PreferencesFields.EMAIL, mEmail)?.putString(PreferencesFields.PASSWORD, mPassword)
-                editor?.putString(PreferencesFields.ACCESS_TOKEN, headers?.get(PreferencesFields.ACCESS_TOKEN))
-                editor?.putString(PreferencesFields.CLIENT, headers?.get(PreferencesFields.CLIENT))
-                editor?.putString(PreferencesFields.TOKEN_TYPE, headers?.get(PreferencesFields.TOKEN_TYPE))
-                editor?.putString(PreferencesFields.EXPIRY, headers?.get(PreferencesFields.EXPIRY))
-                editor?.putString(PreferencesFields.UID, headers?.get(PreferencesFields.UID))
-                editor?.apply()
-                finish()
-            } else {
-                NotificationLogger.d(getTag(), body.toString())
-                NotificationLogger.d(getTag(), error_body?.string()?:"")
-                edt_password.error = getString(R.string.error_incorrect_password)
-                edt_password.requestFocus()
-            }
-        }
-
-        override fun onCancelled() {
-            mAuthTask = null
-            showProgress(false)
-        }
+        edt_password.error = getString(R.string.error_incorrect_password)
+        edt_password.requestFocus()
     }
 
     companion object {
@@ -308,11 +276,6 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
          */
         private val REQUEST_READ_CONTACTS = 0
 
-        /**
-         * A dummy authentication store containing known user names and passwords.
-         * TODO: remove after connecting to a real authentication system.
-         */
-        private val DUMMY_CREDENTIALS = arrayOf("foo@example.com:hello", "bar@example.com:world")
     }
 }
 

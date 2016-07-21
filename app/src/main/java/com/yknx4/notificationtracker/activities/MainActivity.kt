@@ -1,4 +1,4 @@
-package com.yknx4.notificationtracker
+package com.yknx4.notificationtracker.activities
 
 import android.Manifest
 import android.os.Bundle
@@ -6,7 +6,11 @@ import android.support.v7.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
 import com.google.gson.JsonElement
+import com.yknx4.notificationtracker.API
+import com.yknx4.notificationtracker.NotificationLogger
+import com.yknx4.notificationtracker.R
 import com.yknx4.notificationtracker.events.StatusBarNotificationEvent
+import com.yknx4.notificationtracker.getTag
 import com.yknx4.notificationtracker.network.endpoints.AuthService
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
