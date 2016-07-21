@@ -2,10 +2,12 @@ package com.yknx4.notificationtracker
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.location.Location
 import android.os.Build
 import android.service.notification.StatusBarNotification
 import android.text.TextUtils
 import android.util.Base64
+import com.google.android.gms.maps.model.LatLng
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
@@ -94,3 +96,6 @@ fun String.capitalize(): String {
     return phrase
 }
 
+fun Location.toLatLng():LatLng{
+    return LatLng(this.latitude, this.longitude)
+}

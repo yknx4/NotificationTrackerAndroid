@@ -1,3 +1,4 @@
 <resources>
   <string name="socket_url">ws://localhost:3000/socket</string>
+  <string name="google_api_key">AIzaSyDOpI8-1J2yYzYNdiP67csY4_nK5Kr0Jk8</string>
 </resources>

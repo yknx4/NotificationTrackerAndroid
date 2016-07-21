@@ -2,12 +2,19 @@ package com.yknx4.notificationtracker.activities
 
 import android.Manifest
 import android.content.Intent
+import android.location.Location
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.model.LatLng
 import com.google.gson.JsonElement
+import com.yknx4.lib.yknxtools.convert.getPixelsForDp
 import com.yknx4.notificationtracker.*
+import com.yknx4.notificationtracker.events.LocationChangedEvent
 import com.yknx4.notificationtracker.events.StatusBarNotificationEvent
 import com.yknx4.notificationtracker.network.LoginService
 import com.yknx4.notificationtracker.network.endpoints.AuthService
@@ -22,7 +29,28 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class MainActivity : AppCompatActivity() {
+
+class MainActivity : AppCompatActivity(), OnMapReadyCallback {
+    private var mapView: GoogleMap? = null
+
+    override fun onMapReady(googleMap: GoogleMap?) {
+        mapView = googleMap
+        mapView?.uiSettings?.setAllGesturesEnabled(false)
+        mapView?.uiSettings?.isMapToolbarEnabled = false
+        mapView?.uiSettings?.isMyLocationButtonEnabled = false
+        mapView?.uiSettings?.isZoomControlsEnabled = false
+        mapView?.animateCamera(CameraUpdateFactory.newLatLng(LatLng(19.24997, -103.72714)))
+        mapView?.setPadding(0,0,0,getPixelsForDp(24).toInt())
+
+    }
+
+    fun setMapLocation(location: Location){
+        if(mapView!=null){
+            val cameraUpdate = CameraUpdateFactory.newLatLng(location.toLatLng())
+            mapView!!.animateCamera(cameraUpdate)
+        }
+    }
+
     override fun onStop() {
         EventBus.getDefault().unregister(this)
         super.onStop()
@@ -31,6 +59,11 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         EventBus.getDefault().register(this)
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onNewLocation(event: LocationChangedEvent) {
+        setMapLocation(event.newLocation)
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -55,6 +88,9 @@ class MainActivity : AppCompatActivity() {
         requestPermissions(arrayOf(Manifest.permission.READ_CONTACTS,
             Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.READ_PHONE_STATE),
         1)
+
+        map.onCreate(savedInstanceState?: Bundle())
+        map.getMapAsync(this)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
