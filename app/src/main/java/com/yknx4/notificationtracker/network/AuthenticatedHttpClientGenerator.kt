@@ -8,6 +8,8 @@ import com.yknx4.notificationtracker.CustomHeaders
 import com.yknx4.notificationtracker.PreferencesFields
 import com.yknx4.notificationtracker.getLoginEvent
 import okhttp3.*
+import com.yknx4.notificationtracker.models.AuthInformation
+
 import java.io.IOException
 
 /**
@@ -31,7 +33,7 @@ class AuthenticatedHttpClientGenerator internal constructor(context: Context) : 
             return builder.build()
         }
 
-    fun handleLoginResponse(response: Response) {
+    fun handleNewTokenResponse(response: Response) {
         if (response.isSuccessful) {
             authInformation.edit().setAccessToken(response.header(PreferencesFields.ACCESS_TOKEN, authInformation.accessToken)).setClient(response.header(PreferencesFields.CLIENT, authInformation.client)).setTokenType(response.header(PreferencesFields.TOKEN_TYPE, authInformation.tokenType)).setExpiry(response.header(PreferencesFields.EXPIRY, authInformation.expiry)).setUID(response.header(PreferencesFields.UID, authInformation.uid)).apply()
         }
@@ -44,9 +46,9 @@ class AuthenticatedHttpClientGenerator internal constructor(context: Context) : 
     internal inner class Authenticator : okhttp3.Authenticator {
         @Throws(IOException::class)
         override fun authenticate(route: Route, response: Response): Request? {
-            val loginResponse = LoginService().login(authInformation.email, authInformation.password)
+            val loginResponse = LoginService(context).login(authInformation.email, authInformation.password)
             if(loginResponse!=null && loginResponse.isSuccessful) {
-                val event = loginResponse!!.headers().getLoginEvent()
+                val event = loginResponse.headers().getLoginEvent()
                 return response
                         .request()
                         .newBuilder()
@@ -62,6 +64,7 @@ class AuthenticatedHttpClientGenerator internal constructor(context: Context) : 
         }
     }
 
+    // TODO: ADD DEVICE_NAME TO HEADERS
     internal inner class AuthenticationInterceptor : Interceptor {
         @Throws(IOException::class)
         override fun intercept(chain: Interceptor.Chain): Response {
@@ -78,88 +81,12 @@ class AuthenticatedHttpClientGenerator internal constructor(context: Context) : 
                     .build()
             val response = chain.proceed(authorisedRequest)
 
-            handleLoginResponse(response)
+            handleNewTokenResponse(response)
 
             return response
         }
     }
 
-    inner class AuthInformation(private val sharedPreferences: SecurePreferences) {
 
-        private fun getProperty(property: String): String {
-            return sharedPreferences.getString(property, "")
-        }
-
-        val email: String
-            get() = getProperty(PreferencesFields.EMAIL)
-
-        val password: String
-            get() = getProperty(PreferencesFields.PASSWORD)
-
-        val accessToken: String
-            get() = getProperty(PreferencesFields.ACCESS_TOKEN)
-
-        val client: String
-            get() = getProperty(PreferencesFields.CLIENT)
-
-        val tokenType: String
-            get() = getProperty(PreferencesFields.TOKEN_TYPE)
-
-        val expiry: String
-            get() = getProperty(PreferencesFields.EXPIRY)
-
-        val uid: String
-            get() = getProperty(PreferencesFields.UID)
-
-        fun edit(): Setter {
-            return Setter(mPreferences.edit())
-        }
-
-        inner class Setter internal constructor(private val _editor: SecurePreferences.Editor) {
-
-            private fun setProperty(property: String, value: Any): Setter {
-                _editor.putString(property, value.toString())
-                return this
-            }
-
-            fun setEmail(value: String): Setter {
-                return setProperty(PreferencesFields.EMAIL, value)
-            }
-
-            fun setPassword(value: String): Setter {
-                return setProperty(PreferencesFields.PASSWORD, value)
-            }
-
-            fun setAccessToken(value: String): Setter {
-                return setProperty(PreferencesFields.ACCESS_TOKEN, value)
-            }
-
-            fun setClient(value: String): Setter {
-                return setProperty(PreferencesFields.CLIENT, value)
-            }
-
-            fun setTokenType(value: String): Setter {
-                return setProperty(PreferencesFields.TOKEN_TYPE, value)
-            }
-
-            fun setExpiry(value: String): Setter {
-                return setProperty(PreferencesFields.EXPIRY, value)
-            }
-
-            fun setUID(value: String): Setter {
-                return setProperty(PreferencesFields.UID, value)
-            }
-
-            fun apply() {
-                _editor.apply()
-            }
-
-            fun commit(): Boolean {
-                return _editor.commit()
-            }
-
-        }
-
-    }
 
 }
