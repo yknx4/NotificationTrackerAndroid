@@ -16,6 +16,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.yknx4.lib.yknxtools.device.getDeviceUUID
 import com.yknx4.notificationtracker.*
+import com.yknx4.notificationtracker.events.LocationChangedEvent
 import com.yknx4.notificationtracker.events.StatusBarNotificationEvent
 import com.yknx4.notificationtracker.network.AuthenticatedHttpClientGenerator
 import com.yknx4.notificationtracker.network.endpoints.StatusBarNotificationService
@@ -35,6 +36,7 @@ class NotificationTrackerService : NotificationListenerService(), GoogleApiClien
     override fun onLocationChanged(p0: Location?) {
         Log.i(getTag(), "Updating Location")
         LocationAwareSerializer.location = p0
+        EventBus.getDefault().post(LocationChangedEvent(p0))
     }
 
     override fun onConnectionFailed(p0: ConnectionResult) {

@@ -7,11 +7,9 @@ import android.support.v7.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
 import com.google.gson.JsonElement
-import com.yknx4.notificationtracker.API
-import com.yknx4.notificationtracker.NotificationLogger
-import com.yknx4.notificationtracker.R
+import com.yknx4.notificationtracker.*
 import com.yknx4.notificationtracker.events.StatusBarNotificationEvent
-import com.yknx4.notificationtracker.getTag
+import com.yknx4.notificationtracker.network.LoginService
 import com.yknx4.notificationtracker.network.endpoints.AuthService
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
@@ -71,6 +69,13 @@ class MainActivity : AppCompatActivity() {
         // as you specify a parent activity in AndroidManifest.xml.
         val id = item.itemId
 
+        when(id){
+            R.id.action_settings -> return true
+            R.id.action_logout -> {
+                LoginService(this).logout()
+                startActivity(Intent(this, LoginActivity::class.java))
+            }
+        }
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true

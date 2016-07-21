@@ -7,11 +7,9 @@ import android.annotation.TargetApi
 import android.app.LoaderManager.LoaderCallbacks
 import android.content.CursorLoader
 import android.content.Loader
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.Uri
-import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
 import android.provider.ContactsContract
@@ -22,28 +20,32 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
 import android.widget.TextView
-import com.google.gson.JsonElement
-import com.securepreferences.SecurePreferences
-import com.yknx4.notificationtracker.*
+import com.yknx4.notificationtracker.NotificationLogger
+import com.yknx4.notificationtracker.R
 import com.yknx4.notificationtracker.events.FailedLoginEvent
 import com.yknx4.notificationtracker.events.LoginEvent
-import com.yknx4.notificationtracker.events.StatusBarNotificationEvent
+import com.yknx4.notificationtracker.getTag
 import com.yknx4.notificationtracker.network.LoginService
-import com.yknx4.notificationtracker.network.endpoints.AuthService
 import kotlinx.android.synthetic.main.activity_login.*
-import kotlinx.android.synthetic.main.content_main.*
-import okhttp3.Headers
-import okhttp3.ResponseBody
+import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.util.*
 
 /**
  * A login screen that offers login via email/password.
  */
 class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
+    override fun onStop() {
+        EventBus.getDefault().unregister(this)
+        super.onStop()
+    }
+
+    override fun onStart() {
+        EventBus.getDefault().register(this)
+        super.onStart()
+    }
+
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */

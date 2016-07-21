@@ -41,5 +41,6 @@ abstract class PreferencesFields{
 abstract class CustomHeaders {
     companion object{
         const val DEVICE_UID = "device-id"
+        const val DEVICE_NAME = "device-name"
     }
 }

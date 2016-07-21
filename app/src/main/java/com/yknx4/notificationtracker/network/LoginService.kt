@@ -7,7 +7,6 @@ import com.yknx4.lib.yknxtools.models.ContextAware
 import com.yknx4.notificationtracker.API
 import com.yknx4.notificationtracker.PreferencesFields
 import com.yknx4.notificationtracker.events.FailedLoginEvent
-import com.yknx4.notificationtracker.events.LoginEvent
 import com.yknx4.notificationtracker.getLoginEvent
 import com.yknx4.notificationtracker.models.AuthInformation
 import com.yknx4.notificationtracker.network.endpoints.AuthService
@@ -74,5 +73,9 @@ class LoginService : ContextAware, Callback<JsonElement> {
         val response = service.login(email, password).execute()
         handleLoginResponse(response)
         return response
+    }
+
+    fun logout() {
+        authInformation.edit().setAccessToken("").setPassword("").apply()
     }
 }

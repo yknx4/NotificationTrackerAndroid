@@ -4,12 +4,9 @@ import android.content.Context
 import com.securepreferences.SecurePreferences
 import com.yknx4.lib.yknxtools.device.getDeviceUUID
 import com.yknx4.lib.yknxtools.models.ContextAware
-import com.yknx4.notificationtracker.CustomHeaders
-import com.yknx4.notificationtracker.PreferencesFields
-import com.yknx4.notificationtracker.getLoginEvent
-import okhttp3.*
+import com.yknx4.notificationtracker.*
 import com.yknx4.notificationtracker.models.AuthInformation
-
+import okhttp3.*
 import java.io.IOException
 
 /**
@@ -69,10 +66,16 @@ class AuthenticatedHttpClientGenerator internal constructor(context: Context) : 
         @Throws(IOException::class)
         override fun intercept(chain: Interceptor.Chain): Response {
             val originalRequest = chain.request()
+
+            var device_id = ""
+            if(context.loggedIn()){
+                device_id = context.getDeviceUUID().toString()
+            }
             // Add authorization header with updated authorization value to intercepted request
             val authorisedRequest = originalRequest
                     .newBuilder()
-                    .header(CustomHeaders.DEVICE_UID, context.getDeviceUUID().toString())
+                    .header(CustomHeaders.DEVICE_UID, device_id)
+                    .header(CustomHeaders.DEVICE_NAME, getDeviceName())
                     .header(PreferencesFields.ACCESS_TOKEN, authInformation.accessToken)
                     .header(PreferencesFields.CLIENT, authInformation.client)
                     .header(PreferencesFields.TOKEN_TYPE, authInformation.tokenType)

@@ -13,7 +13,6 @@ import com.jaredrummler.android.device.DeviceName
 import com.securepreferences.SecurePreferences
 import com.yknx4.notificationtracker.events.LoginEvent
 import okhttp3.Headers
-import retrofit2.Response
 import java.io.ByteArrayOutputStream
 
 /**
@@ -58,6 +57,10 @@ fun Context.loggedOut(): Boolean {
     return SecurePreferences(this).getString(PreferencesFields.ACCESS_TOKEN, "").equals("")
 }
 
+fun Context.loggedIn(): Boolean {
+    return !loggedOut()
+}
+
 fun Any?.getDeviceName(): String {
     val try_devicename = DeviceName.getDeviceName()
     if(try_devicename.isNotBlank()){
@@ -90,3 +93,4 @@ fun String.capitalize(): String {
     }
     return phrase
 }
+
