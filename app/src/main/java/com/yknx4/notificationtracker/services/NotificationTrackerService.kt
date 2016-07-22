@@ -1,10 +1,6 @@
 package com.yknx4.notificationtracker.services
 
 import android.app.Notification
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.location.Location
 import android.os.Bundle
 import android.service.notification.NotificationListenerService
@@ -18,23 +14,20 @@ import com.google.android.gms.location.LocationServices
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
-import com.google.gson.JsonObject
+import com.yknx4.lib.yknxtools.device.getDeviceUUID
 import com.yknx4.notificationtracker.*
-import com.yknx4.notificationtracker.events.LogEvent
+import com.yknx4.notificationtracker.events.LocationChangedEvent
 import com.yknx4.notificationtracker.events.StatusBarNotificationEvent
-import com.yknx4.notificationtracker.network.endpoints.EchoService
+import com.yknx4.notificationtracker.network.AuthenticatedHttpClientGenerator
 import com.yknx4.notificationtracker.network.endpoints.StatusBarNotificationService
-import com.yknx4.notificationtracker.serializers.LocationAwareSerializer
-import com.yknx4.notificationtracker.serializers.LocationSerializer
-import com.yknx4.notificationtracker.serializers.NotificationSerializer
-import com.yknx4.notificationtracker.serializers.StatusBarNotificationSerializer
+import com.yknx4.notificationtracker.serializers.*
+import okhttp3.OkHttpClient
 import org.greenrobot.eventbus.EventBus
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.util.logging.Logger
 
 /**
  * Created by yknx4 on 7/13/16.
@@ -43,6 +36,7 @@ class NotificationTrackerService : NotificationListenerService(), GoogleApiClien
     override fun onLocationChanged(p0: Location?) {
         Log.i(getTag(), "Updating Location")
         LocationAwareSerializer.location = p0
+        EventBus.getDefault().post(LocationChangedEvent(p0))
     }
 
     override fun onConnectionFailed(p0: ConnectionResult) {
@@ -69,9 +63,12 @@ class NotificationTrackerService : NotificationListenerService(), GoogleApiClien
     var status_notification_serializer:StatusBarNotificationSerializer? = null
     var notification_serializer:NotificationSerializer? = null
 
+    private var  overpowered_http_cient: OkHttpClient? = null
+
     override fun onCreate() {
         initializeGoogleApi()
         initializeRestClient()
+        DeviceAwareSerializer.deviceUUid = getDeviceUUID()
         status_notification_serializer = StatusBarNotificationSerializer()
         notification_serializer = NotificationSerializer()
         gson = GsonBuilder()
@@ -88,9 +85,9 @@ class NotificationTrackerService : NotificationListenerService(), GoogleApiClien
     private var service: StatusBarNotificationService? = null
 
     private fun initializeRestClient() {
-        retrofit = Retrofit.Builder().addConverterFactory(GsonConverterFactory.create()).baseUrl(API.API_URL).build()
+        overpowered_http_cient = AuthenticatedHttpClientGenerator(this).authenticatedClient
+        retrofit = Retrofit.Builder().addConverterFactory(GsonConverterFactory.create()).baseUrl(API.API_URL).client(overpowered_http_cient).build()
         service = retrofit?.create(StatusBarNotificationService::class.java)
-
     }
 
     private var mGoogleApiClient: GoogleApiClient? = null
@@ -111,9 +108,10 @@ class NotificationTrackerService : NotificationListenerService(), GoogleApiClien
         Log.i(getTag(), "**********  onNotificationPosted")
         Log.i(getTag(), "ID :" + sbn.id + "t" + sbn.notification.tickerText + "t" + sbn.packageName)
         val json = sbn.toJson(gson)
-        service?.create(sbn.toJsonObject(gson))?.enqueue(RetrofitNotificationPost())
         postEvent(getTag(), "Posted", json, sbn)
         NotificationLogger.d(getTag(), json)
+        if(loggedOut()) return
+        service?.create(sbn.toJsonObject(gson))?.enqueue(RetrofitNotificationPost())
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {

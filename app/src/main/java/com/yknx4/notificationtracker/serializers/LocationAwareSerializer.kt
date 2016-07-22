@@ -17,7 +17,7 @@ import java.lang.ref.WeakReference
 /**
  * Created by yknx4 on 7/13/16.
  */
-abstract class LocationAwareSerializer {
+abstract class LocationAwareSerializer : DeviceAwareSerializer() {
     companion object{
         private var _location:Location? = null
         var location: Location?
