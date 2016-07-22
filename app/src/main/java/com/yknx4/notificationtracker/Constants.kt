@@ -1,5 +1,7 @@
 package com.yknx4.notificationtracker
 
+import com.google.android.gms.maps.model.LatLng
+
 /**
  * Created by yknx4 on 7/14/16.
  */
@@ -35,6 +37,8 @@ abstract class PreferencesFields{
         const val TOKEN_TYPE = "token-type"
         const val EXPIRY = "expiry"
         const val UID = "uid"
+        const val LATITUDE = "last-latitue"
+        const val LONGITUDE = "last-longitude"
     }
 }
 
@@ -42,5 +46,11 @@ abstract class CustomHeaders {
     companion object{
         const val DEVICE_UID = "device-id"
         const val DEVICE_NAME = "device-name"
+    }
+}
+
+abstract class Map{
+    companion object{
+
     }
 }

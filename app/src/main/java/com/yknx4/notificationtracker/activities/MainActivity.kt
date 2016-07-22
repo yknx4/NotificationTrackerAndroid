@@ -7,11 +7,15 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
+import com.elmargomez.typer.Font
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.model.Circle
+import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.LatLng
 import com.google.gson.JsonElement
+import com.securepreferences.SecurePreferences
 import com.yknx4.lib.yknxtools.convert.getPixelsForDp
 import com.yknx4.notificationtracker.*
 import com.yknx4.notificationtracker.events.LocationChangedEvent
@@ -33,14 +37,26 @@ import retrofit2.converter.gson.GsonConverterFactory
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private var mapView: GoogleMap? = null
 
+    private var currentMarker: Circle? = null
+
+    private fun getPreviousLocation():LatLng?{
+        if(preferences != null && preferences!!.contains(PreferencesFields.LATITUDE) && preferences!!.contains(PreferencesFields.LONGITUDE)){
+            return LatLng(preferences!!.getFloat(PreferencesFields.LATITUDE, 19.24997.toFloat()).toDouble(), preferences!!.getFloat(PreferencesFields.LONGITUDE, (-103.72714).toFloat()).toDouble())
+        }
+        return null
+    }
+
     override fun onMapReady(googleMap: GoogleMap?) {
+        val previousLocation = getPreviousLocation()?: LatLng(19.24997, -103.72714)
         mapView = googleMap
         mapView?.uiSettings?.setAllGesturesEnabled(false)
         mapView?.uiSettings?.isMapToolbarEnabled = false
         mapView?.uiSettings?.isMyLocationButtonEnabled = false
         mapView?.uiSettings?.isZoomControlsEnabled = false
-        mapView?.animateCamera(CameraUpdateFactory.newLatLng(LatLng(19.24997, -103.72714)))
-        mapView?.setPadding(0,0,0,getPixelsForDp(24).toInt())
+        mapView?.animateCamera(CameraUpdateFactory.newLatLng(previousLocation))
+        mapView?.setPadding(0,0,0,getPixelsForDp(resources.getInteger(R.integer.map_padding)).toInt())
+        val markerOptions = CircleOptions().center(previousLocation).strokeWidth(0F).strokeColor(getColor(R.color.colorPrimaryDark)).fillColor(getColor(R.color.colorPrimaryDark)).clickable(false).radius(getPixelsForDp(2).toDouble()).visible(false)
+        currentMarker = mapView?.addCircle(markerOptions)
 
     }
 
@@ -48,6 +64,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         if(mapView!=null){
             val cameraUpdate = CameraUpdateFactory.newLatLng(location.toLatLng())
             mapView!!.animateCamera(cameraUpdate)
+            currentMarker?.center = location.toLatLng()
+            currentMarker?.isVisible = true
         }
     }
 
@@ -71,6 +89,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         large_text.append(event.tag + event.message)
     }
 
+    private var preferences: SecurePreferences? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if(loggedOut()){
@@ -88,6 +108,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         requestPermissions(arrayOf(Manifest.permission.READ_CONTACTS,
             Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.READ_PHONE_STATE),
         1)
+
+        preferences = SecurePreferences(this)
+
+        toolbar_layout.setFontFromTyper(this, Font.ROBOTO_MEDIUM)
+        toolbar_layout.isTitleEnabled = true
 
         map.onCreate(savedInstanceState?: Bundle())
         map.getMapAsync(this)

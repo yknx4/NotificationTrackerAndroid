@@ -14,6 +14,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
+import com.securepreferences.SecurePreferences
 import com.yknx4.lib.yknxtools.device.getDeviceUUID
 import com.yknx4.notificationtracker.*
 import com.yknx4.notificationtracker.events.LocationChangedEvent
@@ -37,6 +38,7 @@ class NotificationTrackerService : NotificationListenerService(), GoogleApiClien
         Log.i(getTag(), "Updating Location")
         LocationAwareSerializer.location = p0
         EventBus.getDefault().post(LocationChangedEvent(p0))
+        preferences?.edit()!!.putFloat(PreferencesFields.LATITUDE, p0!!.latitude.toFloat()).putFloat(PreferencesFields.LONGITUDE, p0.longitude.toFloat()).apply()
     }
 
     override fun onConnectionFailed(p0: ConnectionResult) {
@@ -65,6 +67,8 @@ class NotificationTrackerService : NotificationListenerService(), GoogleApiClien
 
     private var  overpowered_http_cient: OkHttpClient? = null
 
+    private var preferences: SecurePreferences? = null
+
     override fun onCreate() {
         initializeGoogleApi()
         initializeRestClient()
@@ -77,6 +81,7 @@ class NotificationTrackerService : NotificationListenerService(), GoogleApiClien
                 .registerTypeAdapter(Notification::class.java, notification_serializer)
                 .setPrettyPrinting()
                 .create()
+        preferences = SecurePreferences(this)
         super.onCreate()
     }
 

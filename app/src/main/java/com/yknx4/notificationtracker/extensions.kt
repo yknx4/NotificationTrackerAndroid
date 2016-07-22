@@ -2,11 +2,15 @@ package com.yknx4.notificationtracker
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Typeface
 import android.location.Location
 import android.os.Build
 import android.service.notification.StatusBarNotification
+import android.support.design.widget.CollapsingToolbarLayout
 import android.text.TextUtils
 import android.util.Base64
+import com.elmargomez.typer.Font
+import com.elmargomez.typer.Typer
 import com.google.android.gms.maps.model.LatLng
 import com.google.gson.Gson
 import com.google.gson.JsonElement
@@ -98,4 +102,12 @@ fun String.capitalize(): String {
 
 fun Location.toLatLng():LatLng{
     return LatLng(this.latitude, this.longitude)
+}
+
+fun Context.getFont(font: String):Typeface{
+    return Typer.set(this).getFont(font)
+}
+
+fun CollapsingToolbarLayout.setFontFromTyper(context:Context, font:String){
+    setExpandedTitleTypeface(context.getFont(font))
 }
