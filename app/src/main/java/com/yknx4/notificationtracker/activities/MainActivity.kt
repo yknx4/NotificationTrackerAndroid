@@ -54,6 +54,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         mapView?.uiSettings?.isMyLocationButtonEnabled = false
         mapView?.uiSettings?.isZoomControlsEnabled = false
         mapView?.animateCamera(CameraUpdateFactory.newLatLng(previousLocation))
+        // TODO: ADD RIGHT PADDING
         mapView?.setPadding(0,0,0,getPixelsForDp(resources.getInteger(R.integer.map_padding)).toInt())
         val markerOptions = CircleOptions().center(previousLocation).strokeWidth(0F).strokeColor(getColor(R.color.colorPrimaryDark)).fillColor(getColor(R.color.colorPrimaryDark)).clickable(false).radius(getPixelsForDp(2).toDouble()).visible(false)
         currentMarker = mapView?.addCircle(markerOptions)
